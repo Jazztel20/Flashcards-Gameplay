@@ -1,81 +1,64 @@
-@component('components/layout', { title: 'Accueil' })
-  <h3>
-    Liste des decks
-  </h3>
-  <form action="#" method="post">
-    <table>
+@component('components/layout', { title: 'Decks' })
+  @slot('main')
+    <h1 class="text-center mb-5">
+      Liste des decks
+    </h1>
+
+    <table class="table table-bordered align-middle">
       <thead>
         <tr>
-          <th>
-            Titre
+          <th style="width: 50px">
+            #
           </th>
           <th>
-            Date de Publication
+            Liste des decks
           </th>
-          <th>
-            Options
+          <th style="width: 600px">
+            Actions
           </th>
         </tr>
       </thead>
+
       <tbody>
-        <tr>
-          <td>
-            Girardet Alain
-          </td>
-          <td>
-            AGT
-          </td>
-          <td class="containerOptions">
-            <a href="#">
-              <img height="20em" src="./img/edit.png" alt="edit" />
-            </a>
-            <a href="javascript:confirmDelete()">
-              <img height="28em" src="resources/img/bin.png" alt="delete" />
-            </a>
-            <a href="detailTeacher.html">
-              <img height="20em" src="./img/detail.png" alt="detail" />
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Mveng Antoine
-          </td>
-          <td>
-            AMG
-          </td>
-          <td class="containerOptions">
-            <a href="#">
-              <img height="20em" src="./img/edit.png" alt="edit" />
-            </a>
-            <a href="javascript:confirmDelete()">
-              <img height="28em" src="resources/img/bin.png" alt="delete" />
-            </a>
-            <a href="#">
-              <img height="20em" src="./img/detail.png" alt="detail" />
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Charmier Grégory
-          </td>
-          <td>
-            GregLeBarbar
-          </td>
-          <td class="containerOptions">
-            <a href="#">
-              <img height="20em" src="resources/img/edit.png" alt="edit" />
-            </a>
-            <a href="javascript:confirmDelete()">
-              <img height="28em" src="resources/img/bin.png" alt="delete" />
-            </a>
-            <a href="#">
-              <img height="20em" src="resources/img/detail.png" alt="detail" />
-            </a>
-          </td>
-        </tr>
+        @each(deck in decks)
+          <tr>
+            <td>
+              {{ deck.id }}
+            </td>
+            <td>
+              {{ deck.published_date }}
+            </td>
+            <td class="d-flex gap-2 flex-wrap">
+
+              <!-- Modifier -->
+              <a href="{{ route('decks.edit', { id: deck.id }) }}" class="btn btn-outline-info btn-sm">
+                Modifier
+              </a>
+
+              <!-- Voir FlashCards -->
+              <a href="{{ route('flashcards.index', { deckId: deck.id }) }}" class="btn btn-outline-info btn-sm">
+                Voir la liste des FlashCards
+              </a>
+
+              <!-- Créer FlashCard -->
+              <a href="{{ route('flashcards.create', { deckId: deck.id }) }}" class="btn btn-outline-info btn-sm">
+                Créer une nouvelle FlashCard
+              </a>
+
+              <!-- Jouer -->
+              <a href="{{ route('decks.show', { id: deck.id }) }}" class="btn btn-outline-info btn-sm">
+                Jouer
+              </a>
+
+              <!-- Publier -->
+              <a href="{{ route('decks.publish', { id: deck.id }) }}" class="btn btn-outline-info btn-sm">
+                Publier
+              </a>
+
+            </td>
+          </tr>
+        @endeach
       </tbody>
     </table>
-  </form>
+  @endslot
 @endcomponent

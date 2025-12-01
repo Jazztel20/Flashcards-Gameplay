@@ -3,19 +3,25 @@ import Deck from '#models/deck'
 import { HttpContext } from '@adonisjs/core/http'
 
 export default class DecksController {
-  /**
-   * Display tous les decks par ordre de date de création
-   */
-  async show({ response }: HttpContext) {
-    const decks = await Deck.query().orderBy('created_at')
-
-    console.log(decks.length)
-    return response.ok({
-      message: 'Success',
-      data: { decks },
-    })
+  // Page HTML avec la liste des decks
+  public async show({ view }: HttpContext) {
+    const decks = await Deck.query().orderBy('published_date', 'desc')
+    return view.render('decks.index', { decks })
   }
 
+  // Affichage d'un deck unique
+  public async showOneDeck({ params, view }: HttpContext) {
+    const deck = await Deck.findOrFail(params.id)
+    return view.render('decks.showOneDeck', { deck })
+  }
+
+  //Affichage de tous les decks dans ordre décroissant
+  async showAllUnordered({ view }: HttpContext) {
+    const decks = await Deck.query().orderBy('published_date', 'desc')
+    return view.render('decks.show', { decks })
+  }
+
+  //
   async create({}: HttpContext) {}
 
   //updating the datas over
