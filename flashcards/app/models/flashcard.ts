@@ -23,5 +23,5 @@ export default class Flashcard extends BaseModel {
   declare deckId: number | null
 
   @belongsTo(() => Deck)
-  declare public deck: BelongsTo<typeof Deck>
+  declare deck: BelongsTo<typeof Deck>
 }

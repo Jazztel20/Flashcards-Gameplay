@@ -7,16 +7,20 @@ import { dd } from '@adonisjs/core/services/dumper'
 export default class DecksController {
   // Affichage d'un deck unique
   public async showOneDeck({ params, view }: HttpContext) {
-    //dd('show one deck')
-    //    .preload('flashcards')
-    //const deck = await Deck.query().preload('flashcards').where('id', params.id).first()
-    const deck = await Deck.findOrFail(params.id)
-    dd(deck)
+    // Récupère le deck avec toutes ses flashcards
+    const deck = await Deck.query()
+      .preload('flashcards', (flashcardQuery) => {
+        flashcardQuery.orderBy('created_at', 'asc') // tri facultatif
+      })
+      .where('id', params.id)
+      .firstOrFail()
+
+    // Passe l'objet deck avec ses flashcards à la vue
     return view.render('deck', { deck })
   }
 
   // Affichage de tous les decks dans ordre décroissant
-  async showLatestDecks({ view }: HttpContext) {
+  public async showLatestDecks({ view }: HttpContext) {
     const decks = await Deck.query().orderBy('published_date', 'desc')
 
     return view.render('decks', { decks })
@@ -51,6 +55,18 @@ export default class DecksController {
 
     return response.created(deck)
   }
+
+  // Création d'un deck
+  async store({ request, auth, response }: HttpContext) {
+    // UPDATE 0.1 | Request.only à enlever -> validateur s'en charge
+    const data = request.only(['published_date', 'updatedAt'])
+    const deck = await Deck.create({
+      ...data,
+    })
+
+    return response.created(deck)
+  }
+
   // Formulaire d'édition
   async edit({ params, view }: HttpContext) {
     const deck = await Deck.findOrFail(params.id)

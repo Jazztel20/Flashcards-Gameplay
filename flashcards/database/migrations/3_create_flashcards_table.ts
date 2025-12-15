@@ -8,10 +8,19 @@ export default class extends BaseSchema {
       table.increments('id')
 
       table.string('question').notNullable()
-			table.string('reponse').notNullable()
+      table.string('reponse').notNullable()
 
       table.timestamp('created_at')
       table.timestamp('updated_at')
+
+      table
+        .integer('deck_id')
+        .unsigned()
+        .nullable()
+        .references('id')
+        .inTable('decks')
+        .onDelete('CASCADE')
+        .index()
     })
   }
 
