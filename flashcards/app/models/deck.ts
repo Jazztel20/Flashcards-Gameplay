@@ -8,6 +8,12 @@ export default class Deck extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
+  @column()
+  declare name: string
+
+  @column()
+  declare isPublic: boolean
+
   //INPUTS PERSONNALISES
   @column.dateTime()
   declare publishedDate: DateTime

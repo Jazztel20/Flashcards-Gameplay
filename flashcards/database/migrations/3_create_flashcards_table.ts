@@ -8,7 +8,7 @@ export default class extends BaseSchema {
       table.increments('id')
 
       table.string('question').notNullable()
-      table.string('reponse').notNullable()
+      table.string('answer').notNullable()
 
       table.timestamp('created_at')
       table.timestamp('updated_at')

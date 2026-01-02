@@ -13,9 +13,10 @@ export default class extends BaseSeeder {
     }
 
     // Create flashcards and randomly assign them to decks
-    for (let i = 0; i < 10; i++) {
-      const randomDeck = decks[Math.floor(Math.random() * decks.length)]
-      await FlashcardFactory.merge({ deckId: randomDeck.id }).create()
+    for (const deck of decks) {
+      await FlashcardFactory.merge({ deckId: deck.id }).createMany(
+        Math.floor(Math.random() * 5) + 7
+      )
     }
   }
 }

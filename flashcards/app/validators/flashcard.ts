@@ -1,6 +1,7 @@
 import vine from '@vinejs/vine'
 import { Database } from '@adonisjs/lucid/database'
 import type { FieldContext } from '@vinejs/vine/types'
+import { SimpleMessagesProvider } from '@vinejs/vine'
 
 async function recordUniq(
   db: Database,
@@ -28,9 +29,9 @@ export const updateFlashCardValidator = vine.compile(
       .unique(async (...ctxParams) => await recordUniq(...ctxParams, 'flashcard', 'question'))
       .minLength(1)
       .maxLength(50),
-    reponse: vine
+    answer: vine
       .string()
-      .unique(async (...ctxParams) => await recordUniq(...ctxParams, 'flashcard', 'reponse'))
+      .unique(async (...ctxParams) => await recordUniq(...ctxParams, 'flashcard', 'answer'))
       .minLength(1)
       .maxLength(50),
   })

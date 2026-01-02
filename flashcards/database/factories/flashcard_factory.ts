@@ -5,7 +5,7 @@ export const FlashcardFactory = factory
   .define(Flashcard, ({ faker }) => {
     return {
       question: faker.lorem.sentence(),
-      reponse: faker.lorem.sentence(),
+      answer: faker.lorem.sentence(),
     }
   })
   .build()

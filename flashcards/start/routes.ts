@@ -10,47 +10,23 @@ import router from '@adonisjs/core/services/router'
 |
 */
 
-router.group(() => {
-  // Route principale pour afficher tous les decks
-  router.get('decks', [DecksController, 'getDecksByPublishedDate'])
-
-  // Route pour afficher un deck unique
-  router.get('decks/:id', [DecksController, 'showSingleDeck'])
-
-  // Routes pour éditer/modifier un deck
-  router.get('decks/:id/edit', [DecksController, 'edit'])
-  router.put('decks/:id', [DecksController, 'update'])
-
-  // Route Affichage Formulaire
-  router.get('decks/add', [DecksController, 'create'])
-
-  // Route pour créer un deck
-  router.post('decks/add', [DecksController, 'store'])
-
-  // Route pour supprimer un deck
-  router.delete('decks/:id', [DecksController, 'destroy'])
-
-  // Route pour publier un deck
-  router.post('decks/:id/publish', [DecksController, 'create'])
-
-  // Routes pour les flashcards
-  router.get('decks/:id/cards', [FlashcardController, 'getFlashcardsByDeck']).as('flashcards.index')
-
-  // Routes resource users
-  router.resource('users', UsersController).apiOnly()
-})
+import AuthController from '#controllers/auth_controller'
 
 router.group(() => {
-  //Affichage des decks publiés
+  // Routes d'authentification
+  router.get('/register', [AuthController, 'registerShow']).as('auth.register.show')
+  router.post('/register', [AuthController, 'register']).as('auth.register.store')
+  router.get('/login', [AuthController, 'loginShow']).as('auth.login.show')
+  router.post('/login', [AuthController, 'login']).as('auth.login.store')
+  router.post('/logout', [AuthController, 'logout']).as('auth.logout')
 
-  router.get('decks/:deck_id/flashcards', [FlashcardController, 'getFlashcardsByDeck']) // Liste des flashcards
-
-  router.get('decks/:deck_id/flashcards/:id', [FlashcardController, 'index'])
-
-  router.post('flashcard/add', [FlashcardController, 'store']) // Créer une flashcard
-  //router.get('/flashcards/latest', [FlashcardController, 'showLatestFlashcards']) // Voir 10 dernières flashcards
-  // Route pour éditer/modifier une flashcard
-  router.put('flashcard/:id/edit', [FlashcardController, 'update']) // Mettre à jour
-
-  //router.delete('/:id', [FlashcardController, 'destroy']) // Supprimer
+  // Affichage tous les decks
+  router.get('/', [DecksController, 'index']).as('home')
+  // Affichage deck unique
+  router
+    .get('decks/:id', [DecksController, 'showSingleDeck'])
+    .as('decks.showSingleDeck')
+    .where('id', router.matchers.number())
+  // Liste flashcards d'un deck
+  router.get('decks/:deck_id/cards', [FlashcardController, 'index']).as('flashcards.index')
 })

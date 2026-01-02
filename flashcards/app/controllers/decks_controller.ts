@@ -20,6 +20,31 @@ export default class DecksController {
     return view.render('components/decks/detail', { deck })
   }
 
+  // Affichage de tous les decks (Publics + Mes decks)
+  public async index({ view, auth }: HttpContext) {
+    const user = auth.user
+
+    const query = Deck.query()
+
+    if (user) {
+      if (user.isAdmin) {
+        // Admin voit tout
+      } else {
+        // User voit les publics OU les siens
+        query.where((q) => {
+          q.where('is_public', true).orWhere('user_id', user.id)
+        })
+      }
+    } else {
+      // Guest voit uniquement les publics
+      query.where('is_public', true)
+    }
+
+    const decks = await query.orderBy('updated_at', 'desc')
+
+    return view.render('home', { decks })
+  }
+
   // Affichage de tous les decks dans ordre décroissant
   public async getDecksByPublishedDate({ view }: HttpContext) {
     const decks = await Deck.query().orderBy('published_date', 'desc')
@@ -27,17 +52,9 @@ export default class DecksController {
     return view.render('components/decks/list', { decks })
   }
 
-  // Création d'un deck
-  async create({ request, auth, response }: HttpContext) {
-    //const user = auth.user!
-    // UPDATE 0.1 | Request.only à enlever -> validateur s'en charge
-    const data = request.only(['published_date', 'updatedAt'])
-    const deck = await Deck.create({
-      ...data,
-      //userId: user.id,
-    })
-
-    return response.created(deck)
+  // Formulaire de création
+  async create({ view }: HttpContext) {
+    return view.render('decks/create')
   }
 
   // Création d'un deck

@@ -11,7 +11,7 @@ export default class Flashcard extends BaseModel {
   declare question: string
 
   @column()
-  declare reponse: string
+  declare answer: string
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
