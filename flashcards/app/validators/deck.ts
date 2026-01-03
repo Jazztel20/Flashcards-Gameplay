@@ -17,6 +17,12 @@ async function recordUniq(
   return !record
 }
 
+export const deckValidator = vine.compile(
+  vine.object({
+    name: vine.string().trim().minLength(2).maxLength(255),
+  })
+)
+
 /**
  * Validates the deck update action payload.
  */

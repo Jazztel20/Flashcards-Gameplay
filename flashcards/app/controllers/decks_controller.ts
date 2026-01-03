@@ -1,8 +1,7 @@
 // import type { HttpContext } from '@adonisjs/core/http'
 import Deck from '#models/deck'
 import { HttpContext } from '@adonisjs/core/http'
-import Flashcard from '#models/flashcard'
-import { dd } from '@adonisjs/core/services/dumper'
+import { deckValidator } from '#validators/deck'
 
 export default class DecksController {
   // Affichage d'un deck unique
@@ -45,59 +44,112 @@ export default class DecksController {
     return view.render('home', { decks })
   }
 
-  // Affichage de tous les decks dans ordre décroissant
-  public async getDecksByPublishedDate({ view }: HttpContext) {
-    const decks = await Deck.query().orderBy('published_date', 'desc')
-
-    return view.render('components/decks/list', { decks })
-  }
-
   // Formulaire de création
   async create({ view }: HttpContext) {
     return view.render('decks/create')
   }
 
-  // Création d'un deck
-  async store({ request, auth, response }: HttpContext) {
-    // UPDATE 0.1 | Request.only à enlever -> validateur s'en charge
-    const data = request.only(['published_date', 'updatedAt'])
-    const deck = await Deck.create({
-      ...data,
+  // Sauvegarde du deck created
+  async store({ request, response, auth, session }: HttpContext) {
+    const data = await request.validateUsing(deckValidator)
+
+    await Deck.create({
+      name: data.name,
+      userId: auth.user!.id,
     })
 
-    return response.created(deck)
+    session.flash('success', 'Le deck a été ajouté avec succès !')
+    return response.redirect().toRoute('home')
   }
 
   // Formulaire d'édition
-  async edit({ params, view }: HttpContext) {
+  async edit({ params, view, auth, response, session }: HttpContext) {
     const deck = await Deck.findOrFail(params.id)
+
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
     return view.render('decks/edit', { deck })
   }
 
-  //updating the datas over
-  async update({ params, request }: HttpContext) {
-    // Récupération des données
-
-    // UPDATE 0.1 | Request.only à enlever -> validateur s'en charge
-    const data = request.only(['publishedDate']) //validateur
-    // Vérification de l'existence du deck
+  // Mise à jour
+  async update({ params, request, response, session, auth }: HttpContext) {
     const deck = await Deck.findOrFail(params.id)
-    // Mise à jour des données du deck
+
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
+    const data = await request.validateUsing(deckValidator)
+
     deck.merge(data)
-    // Sauvegarde des modifications
     await deck.save()
-    // Retourne le json du deck mis à jour
-    // UPDATER le retour en objet similaire à
-    return deck
+
+    session.flash('success', 'Le deck a été mis à jour avec succès !')
+    return response.redirect().toRoute('home')
   }
 
-  /**
-   * Handle the form submission to delete a specific post by id.
-   */
-  async destroy({ params, auth, response }: HttpContext) {
-    //const user = auth.user!
+  // Suppression
+  async destroy({ params, response, session, auth }: HttpContext) {
     const deck = await Deck.findOrFail(params.id)
+
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de supprimer ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
     await deck.delete()
-    return response.ok({ message: 'Livre supprimé avec succès.' })
+    session.flash('success', 'Le deck a été supprimé avec succès !')
+    return response.redirect().toRoute('home')
+  }
+
+  // Publication
+  async publish({ params, response, session, auth }: HttpContext) {
+    const deck = await Deck.query().where('id', params.id).preload('flashcards').firstOrFail()
+
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de publier ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
+    if (deck.flashcards.length === 0) {
+      session.flash('error', 'Impossible de publier un deck sans flashcards.')
+      return response.redirect().back()
+    }
+
+    deck.isPublic = true
+    deck.publishedDate = DateTime.now()
+    await deck.save()
+
+    session.flash('success', 'Le deck a été publié avec succès !')
+    return response.redirect().back()
+  }
+
+  // Game Mode
+  async play({ params, view, auth, response, session }: HttpContext) {
+    const deck = await Deck.query().where('id', params.id).preload('flashcards').firstOrFail()
+
+    // Access Check: Public OR Owner OR Admin
+    const canPlay =
+      deck.isPublic || (auth.user && (auth.user.id === deck.userId || auth.user.isAdmin))
+
+    if (!canPlay) {
+      session.flash('error', "Vous n'avez pas accès à ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
+    if (deck.flashcards.length === 0) {
+      session.flash('error', 'Ce deck ne contient aucune flashcard.')
+      return response.redirect().back()
+    }
+
+    return view.render('decks/play', {
+      deck,
+      flashcardsJson: JSON.stringify(deck.flashcards),
+    })
   }
 }
+import { DateTime } from 'luxon'

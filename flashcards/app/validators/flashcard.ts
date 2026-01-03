@@ -19,6 +19,16 @@ async function recordUniq(
 }
 
 /**
+ * Validator for creating/updating a flashcard
+ */
+export const flashcardValidator = vine.compile(
+  vine.object({
+    question: vine.string().trim().minLength(2),
+    answer: vine.string().trim().minLength(2),
+  })
+)
+
+/**
  * Validates the flashcard update action payload.
  */
 export const updateFlashCardValidator = vine.compile(

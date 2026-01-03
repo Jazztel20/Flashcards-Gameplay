@@ -10,6 +10,7 @@ export const DeckFactory = factory
 
     return {
       name: faker.commerce.department() + ' Deck',
+      isPublic: true,
       userId: user ? user.id : 1, // Fallback to 1 if no users found (though seeder order should prevent this)
       publishedDate: DateTime.fromJSDate(faker.date.past()),
     }

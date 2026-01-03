@@ -1,56 +1,88 @@
 // import type { HttpContext } from '@adonisjs/core/http'
 import Flashcard from '#models/flashcard'
 import { HttpContext } from '@adonisjs/core/http'
+import { flashcardValidator } from '#validators/flashcard'
+import Deck from '#models/deck'
 
 export default class FlashcardsController {
-  // SHOW LATEST FLASHCARDS
-  async index({ view, params }: HttpContext) {
-    const flashcard = await Flashcard.query().where('id', params.id).firstOrFail()
-
-    return view.render('components/flashcards/detail', { flashcard })
+  // LIST FLASHCARDS FOR A DECK
+  public async index({ params, view }: HttpContext) {
+    const deck = await Deck.findOrFail(params.deck_id)
+    await deck.load('flashcards')
+    return view.render('flashcards/index', { deck, flashcards: deck.flashcards })
   }
 
-  // Récupérer toutes les notes et commentaires pour ce livre
-  public async getFlashcardsByDeck({ params, response, view }: HttpContext) {
-    const deckId = params.deck_id
-    try {
-      // Liaison des flashcards par deck
-      const flashcards = await Flashcard.query().where('deck_id', deckId)
-      /*console.log(
-        'flashcards details:',
-        flashcards.map((i) => i.toJSON())
-      )*/
-      return view.render('components/flashcards/list', { flashcards })
-    } catch (error) {
-      return response.internalServerError({
-        message: 'Erreur serveur',
-        error: error.message,
-      })
+  // CREATE FORM
+  async create({ params, view, auth, response, session }: HttpContext) {
+    const deck = await Deck.findOrFail(params.deck_id)
+
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier ce deck.")
+      return response.redirect().toRoute('home')
     }
+
+    return view.render('flashcards/create', { deck })
   }
 
-  // CREATE A FLASHCARD
-  async store({ request, view }: HttpContext) {
-    const data = request.only(['question', 'answer', 'deck_id'])
+  // STORE FLASHCARD
+  async store({ params, request, response, session, auth }: HttpContext) {
+    const deck = await Deck.findOrFail(params.deck_id)
 
-    const flashcard = await Flashcard.create(data)
-    return view.render('flashcard/create', { flashcard })
+    if (auth.user?.id !== deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier ce deck.")
+      return response.redirect().toRoute('home')
+    }
+
+    const data = await request.validateUsing(flashcardValidator)
+
+    await deck.related('flashcards').create(data)
+
+    session.flash('success', 'La flashcard a été ajoutée avec succès !')
+    return response.redirect().toRoute('flashcards.index', { deck_id: deck.id })
   }
 
-  // UPDATE A FLASHCARD
-  async update({ params, request, view }: HttpContext) {
-    // Récupération des données
-    const data = request.only(['question', 'reponse'])
-    // Vérification de l'existence de
-    const flashcard = await Flashcard.findOrFail(params.id)
-    // Mise à jour des données de l'élève
+  // EDIT FORM
+  async edit({ params, view, auth, response, session }: HttpContext) {
+    const flashcard = await Flashcard.query().where('id', params.id).preload('deck').firstOrFail()
+
+    if (auth.user?.id !== flashcard.deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier cette flashcard.")
+      return response.redirect().toRoute('home')
+    }
+
+    return view.render('flashcards/edit', { flashcard })
+  }
+
+  // UPDATE FLASHCARD
+  async update({ params, request, response, session, auth }: HttpContext) {
+    const flashcard = await Flashcard.query().where('id', params.id).preload('deck').firstOrFail()
+
+    if (auth.user?.id !== flashcard.deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de modifier cette flashcard.")
+      return response.redirect().toRoute('home')
+    }
+
+    const data = await request.validateUsing(flashcardValidator)
+
     flashcard.merge(data)
-    // Sauvegarde des modifications
     await flashcard.save()
-    // Retourne le json de l'élève mis à jour
-    return view.render('flashcard/create', { flashcard })
+
+    session.flash('success', 'La flashcard a été mise à jour avec succès !')
+    return response.redirect().toRoute('flashcards.index', { deck_id: flashcard.deckId })
   }
 
-  // DELETE A FLASHCARD
-  //async destroy({ params, request }) {}
+  // DESTROY FLASHCARD
+  async destroy({ params, response, session, auth }: HttpContext) {
+    const flashcard = await Flashcard.query().where('id', params.id).preload('deck').firstOrFail()
+
+    if (auth.user?.id !== flashcard.deck.userId && !auth.user?.isAdmin) {
+      session.flash('error', "Vous n'avez pas la permission de supprimer cette flashcard.")
+      return response.redirect().toRoute('home')
+    }
+
+    const deckId = flashcard.deckId
+    await flashcard.delete()
+    session.flash('success', 'La flashcard a été supprimée avec succès !')
+    return response.redirect().toRoute('flashcards.index', { deck_id: deckId })
+  }
 }
