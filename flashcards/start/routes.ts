@@ -39,6 +39,7 @@ router
     router.put('decks/:id', [DecksController, 'update']).as('decks.update')
     router.delete('decks/:id', [DecksController, 'destroy']).as('decks.destroy')
     router.post('decks/:id/publish', [DecksController, 'publish']).as('decks.publish')
+    router.get('decks/:id/play', [DecksController, 'play']).as('decks.play')
 
     router
       .get('decks/:deck_id/cards/create', [FlashcardController, 'create'])
