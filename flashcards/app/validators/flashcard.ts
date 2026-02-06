@@ -1,7 +1,7 @@
 import vine from '@vinejs/vine'
 import { Database } from '@adonisjs/lucid/database'
 import type { FieldContext } from '@vinejs/vine/types'
-import { SimpleMessagesProvider } from '@vinejs/vine'
+//import { SimpleMessagesProvider } from '@vinejs/vine'
 
 async function recordUniq(
   db: Database,

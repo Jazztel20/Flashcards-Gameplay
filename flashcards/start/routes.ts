@@ -1,5 +1,4 @@
 import DecksController from '#controllers/decks_controller'
-import UsersController from '#controllers/users_controller'
 import FlashcardController from '#controllers/flashcards_controller'
 import router from '@adonisjs/core/services/router'
 /*
